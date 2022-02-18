@@ -45,9 +45,12 @@
 </ul>
   </div>
 </nav>  
- <hr><center><h2>Otáčkomer - Arduino</h2></center><hr>
+<div class="alert alert-info">
+  <strong>Pri záujme o zdrojový kód rozšírenej verzie projektu IR otáčkomer kontaktujte autora projektu:</strong> martinius96@gmail.com
+</div>
+ <hr><center><h2>IR otáčkomer - Arduino</h2></center><hr>
 <p style="text-align: justify;">
-Otáčkomer založený na infračervenom senzore prekážok KY-032 a LCD znakovom displeji s I2C prevodníkom pre vizualizáciu otáčok za minútu. 
+Otáčkomer založený na mikrokontrolérovej platforme Arduino (AVR ATmega328P), infračervenom senzore prekážok KY-032 a LCD znakovom displeji s I2C prevodníkom pre vizualizáciu otáčok za minútu. 
 Modul infračerveného senzora obsahuje 2 diódy - vysielaciu a prijímaciu a taktiež digitálny výstup, označovaný ako DOUT. 
 Vysielacia dióda má stále napájanie 5V a vyžaruje svetlo s frekvenciou 38 kHz na vlnovej dĺžke 950, resp. 940 nm (podľa konkrétneho modelu použitej IR diódy).
 Prijímacia IR dióda je tmavá, tzv. filter denného svetla. 
@@ -55,17 +58,20 @@ Takáto úprava prijímacej diódy do výraznej miery znižuje senzitivitu diód
 Prijímacia IR dióda je pripojená na vývod modulu DOUT.
 Modul senzora je vybavený potenciometrom pre ovládanie citlivosti, reguláciou sa upravuje detekovaná vzdialenosť objektu.  
 </p>
-<hr>
+<center>
+<img src="https://www.ev3dm.com/wp-content/uploads/2018/09/Screen-Shot-2018-03-11-at-2.50.18-PM.png" style="display: block; max-width: 100%; height: auto;" alt="IR senzor KY-032" title="IR senzor KY-032"></center>
+<img src="https://i.imgur.com/SS6Faua.png" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - schéma pripevnenia reflexného prúžka na remenicu" title="Otáčkomer - schéma pripevnenia reflexného prúžka na remenicu"></center>
 <p style="text-align: justify;">
 Senzor reaguje na prekážku v určitej vzdialenosti (nastavená potenciometrom) 2-40 cm. 
-Pri odraze vysielaného svetla a jeho odraze od prekážky ho dokáže prijať prijímacia LED dióda a tento signál je privedený na DOUT. 
-Tento digitálny výstup je pripojený na digitálny vstup mikrokontrólera Arduino Uno s podporou prerušenia - D2, prípadne D3. 
-Jednou z výhod IR senzorov je fakt, že svetlo sa z lesklých plôch odrazí efektívnejšie ako od plôch matných. 
-V praxi to znamená, že v určitej vzdialenosti dokáže senzor detegovať svetlo z lesklej plochy, avšak z matnej nie. 
+<b>Pri odraze vysielaného svetla a jeho odraze od prekážky ho dokáže prijať prijímacia LED dióda a tento signál je privedený na DOUT. 
+Tento digitálny výstup je pripojený na digitálny vstup mikrokontrólera Arduino Uno s podporou prerušenia - D2, prípadne D3.</b>
+<b>Jednou z výhod IR senzorov je fakt, že svetlo sa z lesklých plôch odrazí efektívnejšie ako od plôch matných. 
+V praxi to znamená, že v určitej vzdialenosti dokáže senzor detegovať svetlo z lesklej plochy, avšak z matnej nie.</b>
 Môžeme tak využiť tento jav pre záznam pohybu lesklej plochy pri jej prechode (záznam otáčok kolesa, remenice).
-Pre moju implementáciu otáčkomera som na vonkajšiu časť remenice kľukového hriadeľa nalepil prúžok pásky široký asi 1cm, prípadne je dobré použiť aj alobal, či celofán, ktorý má veľmi dobré odrazové vlastnosti svetla.
+Pre moju implementáciu otáčkomera som na vonkajšiu časť remenice kľukového hriadeľa nalepil prúžok pásky široký asi 1 cm, prípadne je dobré použiť aj alobal, či celofán, ktorý má veľmi dobré odrazové (reflexné) vlastnosti svetla.
 Citlivosť senzora som nastavil potenciometrom tak, aby mi senzor reagoval iba na prechod lesklej plochy, nie na remenicu ako takú. 
  </p>           
+<center><img src="https://i.imgur.com/642fP7C.png" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - schéma zapojenia IR senzora KY-032 a LCD displeja - Arduino" title="Otáčkomer - schéma zapojenia IR senzora KY-032 a LCD displeja - Arduino"></center>
 <p style="text-align: justify;">
 <b>Modelová situácia:</b><br>
 Motor naftového traktora má maximálne otáčky 2500 ot/min. 
@@ -78,6 +84,7 @@ Vďaka I2C prevodníku stačia na prepojenie displeja a Arduina 4 vodiče.
 Napájanie (5V), zem (GND), hodinový signál (SCL), dáta (SDA). 
 Otáčkomer je možné použiť na rôzne stroje, sledovanie otáčok remeníc traktorov, kombajnov, ale aj v priemysle pre monitorovanie procesov, prevádzky a aktivity strojov, rýchlosti posuvu. 
 Štandardná implementácia využíva rýchlosť komunikácie s displejom 100 kHz, možno použiť až 400 kHz pre rýchlejší prepis displeja.
+<b>Program je možné použiť aj s hall senzorom a magnetom umiestneným na remenici. Program je totožný.</b>
 <br>
 <code>
 <b>Vzorec prepočtu (1Hz rutina --> spúšťané každých 1000 ms):<b><br>
@@ -87,6 +94,63 @@ oldtime = akt_cas;           //uloz aktualny cas<br>
 pocet_pulzov = 0;
 </code> 
             </p>  
+	<p style="text-align: justify;">
+<b>Programová implementácia:</b><br>
+Zjednodušená programová implementácia, ktorá je na stránke projektu dostupná nerieši odrušenie pred zákmitmi. 
+Debounce je vhodné doimplementovať samostatne do výsledného programu. 
+Pri nevyužívaní debouncingu môže byť miera chybovosti programu do +- 30%. 
+</p>
+<pre>
+//Martin Chlebovec (martinius96@gmail.com)
+//Základná implementácia pre otáčkomer na platforme Arduino Uno / Nano (ATmega328P)
+//Neobsahuje ošetrenie zákmitov, volatile premenné v interrupt rutine (negarantované obslúženie premennej)
+//Verzia zdarma pre orientačné meranie, chybovost meraní do: 30%
+#include &lt;LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x3F, 20, 4);     //alebo 0x27 (najpouzivanejsie I2C komunikacne adresy)
+int rev = 0;
+int rpm;
+unsigned long oldtime = 0;
+unsigned long time;
+
+void isr() {
+  rev++;
+}
+
+void setup() {
+  lcd.begin(); //100 kHz I2C speed - Standard Mode
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("-----ZETOR 4011-----");
+  attachInterrupt(digitalPinToInterrupt (2), isr, RISING); //interrupt pin
+}
+
+void loop() {
+  delay(1000);
+  detachInterrupt(digitalPinToInterrupt(2));      
+  time = millis() - oldtime;    //rozdiel casov
+  rpm = (rev / time) * 60000;   //vyrataj otacky/min
+  oldtime = millis();           //uloz aktualny cas
+  rev = 0;
+  lcd.setCursor(0, 1);
+  lcd.print(rpm);
+  lcd.print(" ot/min   ");
+  attachInterrupt(digitalPinToInterrupt (2), isr, RISING);
+}
+</pre>
+<center><img src="https://i.imgur.com/eIfKPXN.jpg" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - výpis na displej - Arduino" title="Otáčkomer - výpis na displej - Arduino"></center>
+<p style="text-align: justify;">
+<b>Rozšírený program:</b><br>
+Využíva prepočet pauzy medzi jednotlivými pulzami v čase kompilácie na základe hodnoty z makra, ktoré predstavuje maximálne otáčky stroja, ktoré nadobúda. 
+Oproti zjednodušenému programu je integrovaná aj volatile premenná uint_32, ktorá uchováva čas posledného pulzu. 
+To v kombinácii so známou pauzou zaručí správne pripočítanie pulzu bez zákmitu, ktoré sa môžu vyskytnúť. 
+Meranie je presnejšie ako v klasickom programe. 
+Rozšírený program nevyužíva delay(), nahradené funkciou millis() pre presnejšie časovanie rutiny každých 1000 ms bez oneskorenia spôsobeného vykreslovaním na displej (rádovo v pôvodnom programe 1000 ms delay + 3 ms vykonávanie výpisu na displej na každú iteráciu loopu).
+Komunikácia s displejom je rýchlejšia, nakoľko je nastavený hodinový signál 400 kHz (Fast speed). 
+Prekreslovanie znakov trvá 4-násobne kratšie ako v prípade štandardnej komunikačnej rýchlosti 100 kHz. 
+Funkcie detach a attach interrupt nahradené s makrami cli(), sei(). 
+Implementácia je vhodná aj pre projekty s vyšším počtom otáčok za minútu (rádovo až do 12 000 ot/min). 
+</p>
+<center><img src="https://i.imgur.com/661YlGp.png" style="display: block; max-width: 100%; height: auto;" alt="Debouncing - rozšírená verzia projektu Otáčkomer" title="Debouncing - rozšírená verzia projektu Otáčkomer"></center>
 			</div>
 		</div>
 </div>
