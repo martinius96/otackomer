@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="sk-SK">
+<head>
+	<!-- Primary Meta Tags -->
+	<title>Rýchlomer, digitálny potenciometer, debouncing - Arduino</title>
+	<meta name="title" content="Rýchlomer, digitálny potenciometer, debouncing - Arduino">
+	<meta name="description" content="IR otáčkomer, digitálny pontenciometer pre rýchlomer rušňa na platforme Arduino Uno.">
+	<meta name="keywords" content="koleso, obruč, otáčky, rýchlomer, arduino, infračervený, senzor, modul, ir, atmega328p, rušeň, železnice600">
+	
+	<meta name="robots" content="index, follow">	
+	<link rel="icon" type="image/png" href="https://martinius96.github.io/termostat-ethernet/favicon.png">
+	<link rel="sitemap" type="application/xml" title="Sitemap" href="../sitemap.xml" />
+	<meta name="google-site-verification" content="UwZZh2EXv3iWUAi_1Z0hLxVCz6ySJ4UdY_BPoLtejwo" />    	
+	<meta property='fb:admins' content='100001242570317'>
+    	<meta charset="utf-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+    		window.smartlook||(function(d) {
+    			var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+    			var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+    			c.charset='utf-8';c.src='https://rec.smartlook.com/recorder.js';h.appendChild(c);
+    		})(document);
+    		smartlook('init', 'db50efe9fff280a17db52b82be221240cbbd3dbe');
+	</script>    
+		<style>
+	#right {
+  position: absolute;
+  right: 0px;
+}
+	</style>
+</head>
+<body>
+	<div class="container">
+  		<div class="row">
+    			<div class="col-sm-12">
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <ul class="nav navbar-nav">
+      	<li><a href="index.html">Otáčkomer</a></li>
+	      <li class="active"><a href="rychlomer.html">Rýchlomer</a></li>     
+</ul>
+  </div>
+</nav>  
+<div class="alert alert-info" style="display: none;">
+  <strong>Pri záujme o zdrojový kód rozšírenej verzie projektu IR otáčkomer kontaktujte autora projektu:</strong> martinius96@gmail.com
+</div>
+ <hr><center><h2>Rýchlomer, digitálny potenciometer</h2></center><hr>
+<p style="text-align: justify;">
+Projekt rýchlomera kombinuje použitie fotoelektrického snímača a digitálneho potenciometra. 
+Arduino bude na základe počtu otáčok kolesa zachytenými fotoelektrickým snímačom elektricky nastavovať digitálny pontenciometer.
+Potenciometer je pripojený na vyšší systém, ktorý je pripojený k rýchlomeru a vizualizuje na analógovom displeji rýchlosť lokomotívy.
+V našom prípade využijeme 8 bodov pripevnených na koleso elektrickej lokomotívy, aby výstup pre rýchlomer nebol skokovitý.
+Na jednu otáčku kolesa tak bude prislúchať 8 prechodov, ktoré zaznamená fotoelektrický snímač RobotDYN.
+V konkrétny časový interval sa počet prechodov spočíta a odošlú sa ako počet krokov do digitálneho potenciometra, ktorý sa nastaví na určitý odpor, ktorý je linárne odstupňovaný.
+</p>
+<center>
+<img src="https://i.imgur.com/KTrmgGZ.png" style="display: block; max-width: 100%; height: auto;" alt="Body pripevnené na koleso rušňa" title="Body pripevnené na koleso rušňa">
+</center>
+<p style="text-align: justify;">
+<b>Technické informácie o vozidle (elektrický rušeň triedy 362 "ESO") - Železnice 600 Vracov:</b>
+<li>vmax = 20 km/h / 3,6 =  5,55 m/s, (maximálna rýchlosť rušňa)</li>
+<li>d = 0,45 m (priemer kolesa na podvozku rušňa)</li>
+<li>obvod = pi*d = pi*0,45 m ≐ 1,413 m, --> vzdialenosť, ktorú koleso prejde na jedno otáčku</li>
+<li>n = vmax/obvod, teda n =  3.93-krát sa otočí koleso za 1 sekundu pri maximálnej rýchlosti 20 km/h</li>
+<li>T.j. 3,93*8 pulzov ≐ to predstavuje 31 pulzov na sekundu pri maximálnej rýchlosti 20 km/h</li>
+Medzi prichádzajúcimi pulzmi bude pri maximálnej rýchlosti rušňa pauza cca 32.25 ms. 
+Tento interval je možné použiť pre rozlíšenie dvoch po sebe idúcich signálov bez započítania zákmitu, ktorý môže nastať na digitálnom vstupe.
+ </p>           
+<center><img src="https://i.imgur.com/642fP7C.png" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - schéma zapojenia IR senzora KY-032 a LCD displeja - Arduino" title="Otáčkomer - schéma zapojenia IR senzora KY-032 a LCD displeja - Arduino"></center>
+<h4>Digitálny potenciometer X9C103S:</h4>
+<p style="text-align: justify;">
+Digitálny potenciometer X9C103S á rozsah nastavenia odporu 0 až 10 kohm, pričom je ho možné prenastaviť v 100 krokoch, ktoré sú identicky odstupňované po 100 ohm. 
+Tento potenciometer má lineárnu charakteristiku. 
+Prúdové zaťaženie potenciometra na výstupe je max 4.4 mA, preto sa nehodí do výkonových sústav, ale iba ako signalizačná súčiastka.
+V aktuálnej implementácii sa za jednotku času (napr. 1 sekunda)  nastaví potenciometer na hodnotu počet pulzov * 100 ohm. 
+Výstup potenciometra je pripojený priamo do počítača vyššieho systému, ktorý hodnotu vizualizuje na displej stanovišťa lokomotívy. 
+Pre prepojenie digitálneho potenciometra X9C103S s Arduinom sa využívajú 3 dátové vodiče (CS, INC, U/D) + napájanie.
+            </p>  
+	<h4>Čítač impulzov (otáčok)</h4>
+	<p style="text-align: justify;">
+Fotoelektrický snímač (RobotDYN) je založený na infračervenom vysielači a prijímači. 
+Štandardne je prijímač schopný detegovať signál z vysielača, ktorý vysiela nepretržite. 
+Tento výstup prijímača je priamo pripojený k DOUT (Digital Out) výstupu modulu. 
+Teda v prípade prechodu bodu medzi vysielačom a prijímačom sa na výstupe DOUT objaví logická 0 - LOW.  
+Senzor má dostupný aj analógový výstup, ktorý však momentálne nevyužijeme pre túto aplikáciu.
+Arduino je schopné tento digitálny signál načítavať v prerušení, pričom sa zaoberá zostupnou hranou signálu z HIGH to LOW. 
+Tento jav so zostupnou hranou nazývame aj FALLING. 
+Na typ prerušenia RISING (vzostupná hrana), LOW prerušenie nezareaguje. 
+Nežiadúci jav, ktorý nastáva je zvlnenie signálu, ktoré môže byť zapríčinené rôznymi javmi, napríklad nestálosť signálu, slabá filtrácia, pomalý prechod bodu popred snímač, externé rušenie a iné... 
+Vo výsledku to môže zapríčiniť, že jeden reálny prechod načítaný aj niekoľko-krát z dôvodu zákmitov. 
+Existujú rôzne spôsoby, predovšetkým pre optimalizáciu takéhoto signálu hardvérovou formou napríklad využitím kondenzátora, ktorý daný zákmit dokáže eliminovať, predĺži častokrát aj jeho dĺžku dobehom napäťovej úrovne. 
+Zákmit je veľmi krátky, trvá maximálne pár jednotiek milisekúnd. 
+Riešením je aj softvérový debounce, kedy prerušenie FALLING zareaguje na prechod z HIGH do LOW úrovne, avšak využívame aj overenie času, či je medzi signálmi aspoň x milisekúnd. 
+Nakoľko z predchádzajúceho prepočtu vieme, že medzi pulzami bude 32 milisekúnd pri maximálnej rýchlosti rušňa, môžeme zvoliť pokojne 15 až 30 ms debounce. 
+To zaručí, že načítame až ďalší signál a nie zvlnenie existujúceho signálu so zákmitmi.
+</p>
+            <h4>Technické informácie k projektu</h4>
+<pre>
+//Martin Chlebovec (martinius96@gmail.com)
+//Základná implementácia pre otáčkomer na platforme Arduino Uno / Nano (ATmega328P)
+//Neobsahuje ošetrenie zákmitov, volatile premenné v interrupt rutine (negarantované obslúženie premennej)
+//Verzia zdarma pre orientačné meranie, chybovost meraní do: 30%
+#include &lt;LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x3F, 20, 4);     //alebo 0x27 (najpouzivanejsie I2C komunikacne adresy)
+int rev = 0;
+int rpm;
+unsigned long oldtime = 0;
+unsigned long time;
+
+void isr() {
+  rev++;
+}
+
+void setup() {
+  lcd.begin(); //100 kHz I2C speed - Standard Mode
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("-----ZETOR 4011-----");
+  attachInterrupt(digitalPinToInterrupt (2), isr, RISING); //interrupt pin
+}
+
+void loop() {
+  delay(1000);
+  detachInterrupt(digitalPinToInterrupt(2));      
+  time = millis() - oldtime;    //rozdiel casov
+  rpm = (rev / time) * 60000;   //vyrataj otacky/min
+  oldtime = millis();           //uloz aktualny cas
+  rev = 0;
+  lcd.setCursor(0, 1);
+  lcd.print(rpm);
+  lcd.print(" ot/min   ");
+  attachInterrupt(digitalPinToInterrupt (2), isr, RISING);
+}
+</pre>
+<center><img src="https://i.imgur.com/eIfKPXN.jpg" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - výpis na displej - Arduino" title="Otáčkomer - výpis na displej - Arduino"></center>
+<h4>Rozšírený program:</h4>
+<p style="text-align: justify;">
+Využíva prepočet pauzy medzi jednotlivými pulzami v čase kompilácie na základe hodnoty z makra, ktoré predstavuje maximálne otáčky stroja, ktoré nadobúda. 
+Oproti zjednodušenému programu je integrovaná aj volatile premenná uint_32, ktorá uchováva čas posledného pulzu. 
+To v kombinácii so známou pauzou zaručí správne pripočítanie pulzu bez zákmitu, ktoré sa môžu vyskytnúť. 
+Meranie je presnejšie ako v klasickom programe. 
+Rozšírený program nevyužíva delay(), nahradené funkciou millis() pre presnejšie časovanie rutiny každých 1000 ms bez oneskorenia spôsobeného vykreslovaním na displej (rádovo v pôvodnom programe 1000 ms delay + 3 ms vykonávanie výpisu na displej na každú iteráciu loopu).
+Komunikácia s displejom je rýchlejšia, nakoľko je nastavený hodinový signál 400 kHz (Fast speed). 
+Prekreslovanie znakov trvá 4-násobne kratšie ako v prípade štandardnej komunikačnej rýchlosti 100 kHz. 
+Funkcie detach a attach interrupt nahradené s makrami cli(), sei(). 
+Implementácia je vhodná aj pre projekty s vyšším počtom otáčok za minútu (rádovo až do 12 000 ot/min). 
+</p>
+<center><img src="https://i.imgur.com/661YlGp.png" style="display: block; max-width: 100%; height: auto;" alt="Debouncing - rozšírená verzia projektu Otáčkomer" title="Debouncing - rozšírená verzia projektu Otáčkomer"></center>
+			</div>
+		</div>
+</div>
+</body>
+</html>
