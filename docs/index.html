@@ -78,11 +78,12 @@ Vďaka I2C prevodníku stačia na prepojenie displeja a Arduina 4 vodiče.
 Napájanie (5V), zem (GND), hodinový signál (SCL), dáta (SDA). 
 Otáčkomer je možné použiť na rôzne stroje, sledovanie otáčok remeníc traktorov, kombajnov, ale aj v priemysle pre monitorovanie procesov, prevádzky a aktivity strojov, rýchlosti posuvu. 
 Štandardná implementácia využíva rýchlosť komunikácie s displejom 100 kHz, možno použiť až 400 kHz pre rýchlejší prepis displeja.
+<br>
 <code>
-Vzorec prepočtu (1Hz rutina --> spúšťané každých 1000 ms):
-time = akt_cas - posledny_cas;    //rozdiel casov
-rpm = (pocet_pulzov/ time) * 60000;   //vyrataj otacky/min
-oldtime = akt_cas;           //uloz aktualny cas
+<b>Vzorec prepočtu (1Hz rutina --> spúšťané každých 1000 ms):<b><br>
+time = akt_cas - posledny_cas;    //rozdiel casov<br>
+rpm = (pocet_pulzov/ time) * 60000;   //vyrataj otacky/min<br>
+oldtime = akt_cas;           //uloz aktualny cas<br>
 pocet_pulzov = 0;
 </code> 
             </p>  
