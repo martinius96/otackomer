@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="sk-SK">
+<head>
+	<!-- Primary Meta Tags -->
+	<title>Hladinomer do studne - Kontakt na autora projektu</title>
+	<meta name="title" content="Hladinomer do studne - Kontakt na autora projektu">
+	<meta name="description" content="Hladinomer - monitor výšky hladiný vody postavený na platforme Arduino / Espressif - ESP8266, ESP32. Kontaktné údaje na majiteľa projektu - e-mail, Discord, Facebook">
+	<meta name="keywords" content="hladinomer, monitor, výška, hladina, voda, objem, studňa, žumpa, kontakt, cm, liter, výnos, zavlažovanie, arduino, espressif, esp8266, esp32, ultrazvuk, senzor, hc-sr04, jsn-sr04t, ethernet, wifi, zrážkomer, hydreon, rg-11">
+	
+	<meta name="robots" content="index, follow">
+<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://martinius96.github.io/hladinomer-studna-scripty/kontakt.html">
+	<meta property="og:title" content="Hladinomer do studne - Kontakt na autora projektu">
+	<meta property="og:description" content="Hladinomer - monitor výšky hladiný vody postavený na platforme Arduino / Espressif - ESP8266, ESP32. Kontaktné údaje na majiteľa projektu - e-mail, Discord, Facebook">
+	<meta property="og:image" content="">
+
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image">
+	<meta property="twitter:url" content="https://martinius96.github.io/hladinomer-studna-scripty/kontakt.html">
+	<meta property="twitter:title" content="Hladinomer / Zrážkomer - Kontakt na autora projektu">
+	<meta property="twitter:description" content="Hladinomer - monitor výšky hladiný vody postavený na platforme Arduino / Espressif - ESP8266, ESP32. Kontaktné údaje na majiteľa projektu - e-mail, Discord, Facebook">
+	<meta property="twitter:image" content="">
+	
+	<link rel="icon" type="image/png" href="https://martinius96.github.io/termostat-ethernet/favicon.png">
+	<link rel="sitemap" type="application/xml" title="Sitemap" href="../sitemap.xml" />
+	<meta name="google-site-verification" content="UwZZh2EXv3iWUAi_1Z0hLxVCz6ySJ4UdY_BPoLtejwo" />    	
+	<meta property='fb:admins' content='100001242570317'>
+    	<meta charset="utf-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+    		window.smartlook||(function(d) {
+    			var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+    			var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+    			c.charset='utf-8';c.src='https://rec.smartlook.com/recorder.js';h.appendChild(c);
+    		})(document);
+    		smartlook('init', 'db50efe9fff280a17db52b82be221240cbbd3dbe');
+	</script>    
+		<style>
+	#right {
+  position: absolute;
+  right: 0px;
+}
+	</style>
+</head>
+<body>
+	<div class="container">
+  		<div class="row">
+    			<div class="col-sm-12">
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <ul class="nav navbar-nav">
+      	<li><a href="index.html">Otáčkomer</a></li>
+	      <li><a href="rychlomer.html">Rýchlomer</a></li>     
+</ul>
+  </div>
+</nav>  
+ <hr><center><h2>Otáčkomer - Arduino</h2></center><hr>
+<p style="text-align: justify;">
+Otáčkomer založený na infračervenom senzore prekážok KY-032 a LCD znakovom displeji s I2C prevodníkom pre vizualizáciu otáčok za minútu. 
+Modul infračerveného senzora obsahuje 2 diódy - vysielaciu a prijímaciu a taktiež digitálny výstup, označovaný ako DOUT. 
+Vysielacia dióda má stále napájanie 5V a vyžaruje svetlo s frekvenciou 38 kHz na vlnovej dĺžke 950, resp. 940 nm (podľa konkrétneho modelu použitej IR diódy).
+Prijímacia IR dióda je tmavá, tzv. filter denného svetla. 
+Takáto úprava prijímacej diódy do výraznej miery znižuje senzitivitu diódy na svetlo, čo je nežiadúci jav - interferencia. 
+Prijímacia IR dióda je pripojená na vývod modulu DOUT.
+Modul senzora je vybavený potenciometrom pre ovládanie citlivosti, reguláciou sa upravuje detekovaná vzdialenosť objektu.  
+</p>
+<hr>
+<p style="text-align: justify;">
+Senzor reaguje na prekážku v určitej vzdialenosti (nastavená potenciometrom) 2-40 cm. 
+Pri odraze vysielaného svetla a jeho odraze od prekážky ho dokáže prijať prijímacia LED dióda a tento signál je privedený na DOUT. 
+Tento digitálny výstup je pripojený na digitálny vstup mikrokontrólera Arduino Uno s podporou prerušenia - D2, prípadne D3. 
+Jednou z výhod IR senzorov je fakt, že svetlo sa z lesklých plôch odrazí efektívnejšie ako od plôch matných. 
+V praxi to znamená, že v určitej vzdialenosti dokáže senzor detegovať svetlo z lesklej plochy, avšak z matnej nie. 
+Môžeme tak využiť tento jav pre záznam pohybu lesklej plochy pri jej prechode (záznam otáčok kolesa, remenice).
+Pre moju implementáciu otáčkomera som na vonkajšiu časť remenice kľukového hriadeľa nalepil prúžok pásky široký asi 1cm, prípadne je dobré použiť aj alobal, či celofán, ktorý má veľmi dobré odrazové vlastnosti svetla.
+Citlivosť senzora som nastavil potenciometrom tak, aby mi senzor reagoval iba na prechod lesklej plochy, nie na remenicu ako takú. 
+ </p>           
+<h5>Modelová situácia</h5>
+<p style="text-align: justify;">
+Motor naftového traktora má maximálne otáčky 2500 ot/min. 
+To znamená, že pri maximálnych otáčkach motora za sekundu Arduino zaznamená 41 prechodov odrazovej plochy. 
+Medzi jednotlivými pulzami pri maximálnych otáčkach bude pauza cca. 24 milisekúnd, ktorú je možné použiť napríklad aj pre softvérové vyhladenie zákmitov - Debouncing pre rozlíšenie dvoch za sebou idúcich pulzov.
+Arduino v prerušení bude načítavať pulzy a inkrementovať premennú dátového typu INT. 
+Prerušenie bude reagovať na vzostupnú hranu signálu -  RISING. (t.j. na stav prechodu z GND to 5V). 
+Na základe vyhodnocovania vzorcom každú sekundu (1 Hz obnovovacia frekvencia displeja s otáčkami) sa vypočíta počet otáčok motora za minútu a hodnota sa vypíše na LCD znakový displej, ktorý komunikuje s Arduinom po I2C zbernici. 
+Vďaka I2C prevodníku stačia na prepojenie displeja a Arduina 4 vodiče. 
+Napájanie (5V), zem (GND), hodinový signál (SCL), dáta (SDA). 
+Otáčkomer je možné použiť na rôzne stroje, sledovanie otáčok remeníc traktorov, kombajnov, ale aj v priemysle pre monitorovanie procesov, prevádzky a aktivity strojov, rýchlosti posuvu. 
+Štandardná implementácia využíva rýchlosť komunikácie s displejom 100 kHz, možno použiť až 400 kHz pre rýchlejší prepis displeja.
+<code>
+Vzorec prepočtu (1Hz rutina --> spúšťané každých 1000 ms):
+time = akt_cas - posledny_cas;    //rozdiel casov
+rpm = (pocet_pulzov/ time) * 60000;   //vyrataj otacky/min
+oldtime = akt_cas;           //uloz aktualny cas
+pocet_pulzov = 0;
+</code> 
+            </p>  
+			</div>
+		</div>
+</div>
+</body>
+</html>
