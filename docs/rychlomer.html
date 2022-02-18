@@ -98,58 +98,90 @@ Riešením je aj softvérový debounce, kedy prerušenie FALLING zareaguje na pr
 Nakoľko z predchádzajúceho prepočtu vieme, že medzi pulzami bude 32 milisekúnd pri maximálnej rýchlosti rušňa, môžeme zvoliť pokojne 15 až 30 ms debounce. 
 To zaručí, že načítame až ďalší signál a nie zvlnenie existujúceho signálu so zákmitmi.
 </p>
-            <h4>Technické informácie k projektu</h4>
+<h4>Technické informácie k programovej implementácii</h4>
+<p style="text-align: justify;">
+Všetky premenné, ktoré sa využívajú v prerušení, musia byť typu volatile, aby ich prerušenie obslúžilo bez ohľadu nato, kde sa aktuálne program vykonáva. 
+Prerušenie obslúži premenné typu volatile aj v prípade, že je program zastavený na funkcii delay(). 
+V našom prípade máme volatile premenné pre počet pulzov (int) a čas (unsigned long) načítaný z funkcie millis(). 
+Prerušenie (v prípade dosky Arduino Uno) je možné využiť iba pre vývody s podporou hardvérového prerušenia, t.j. D2, D3.
+V systéme sa využíva počítadlo millis(), ktoré raz za 1000 ms prerušenie odpojí. 
+Následne Arduino zapíše hodnotu načítaných signálov ako počet krokov na digitály potenciometer, vynuluje počítadlo a následne opäť obnoví prerušenie. 
+Čas 1000 ms pre vyhodnotenie je iba ukážkový a je v systéme plne konfigurovateľný prostredníctvom UART monitoru, kedy je možné zapísaním znakov +, respektíve - pripočítať a odpočítať 100 ms (pre testovacie účely a nájdenie optimálneho času refreshu).
+Nakoľko je možné na digitálny potenciometer X9C103S  zapísať hodnoty 0 až 100, nesmieme presiahnuť 100 krokov. 
+Optimálne je teda zaznamenávať pulzy max 3 sekundy (31 pulzov na sekundu pri maximálnej rýchlosti 20km/h), aby sme zaručili počet krokov pod 100, prípadne ich môžeme priemerovať / vydeliť počtom prechodov, čím získame počet otáčok kolesa ako takého, čo už môže však byť v riešení vyššieho systému, ktorý pracuje s výstup digitálneho potenciometra.
+Samotný prepočet už realizuje vo vyššom systéme C# aplikácia na počítači, ktorá určí aktuálnu rýchlosť vozidla a dokáže túto rýchlosť vizualizovať aj na monitore lokomotívy. 
+Nakoľko update prebieha štandardne každých 1000 ms t.j, refresh rate je 1 Hz, zmena rýchlosti na monitore - analógovom vizualizéri (na štýl analógového ručičkového voltmetra) nie je skokovitá. 
+Počítač je pripojený priamo k výstupu potenciometra X9C103S.
+</p>
+<center><img src="http://zeleznice600.cz/wp/wp-content/uploads/2018/10/stanoviste_10.jpg" style="display: block; max-width: 100%; height: auto;" alt="Stanovište lokomotívy ESO" title="Stanovište lokomotívy ESO"></center>
+<h4>Programová implementácia:</h4>
+<p style="text-align: justify;">
+Potenciometer X9C103S má určitú odchýlku na nastavenej hodnote odporu v rozmedzí 10 až 20%, reálne je cca do 12% s čím treba počítať a korekciu zapracovať do finálnej aplikácie.
+</p>
 <pre>
-//Martin Chlebovec (martinius96@gmail.com)
-//Základná implementácia pre otáčkomer na platforme Arduino Uno / Nano (ATmega328P)
-//Neobsahuje ošetrenie zákmitov, volatile premenné v interrupt rutine (negarantované obslúženie premennej)
-//Verzia zdarma pre orientačné meranie, chybovost meraní do: 30%
-#include &lt;LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x3F, 20, 4);     //alebo 0x27 (najpouzivanejsie I2C komunikacne adresy)
-int rev = 0;
-int rpm;
-unsigned long oldtime = 0;
-unsigned long time;
+//Autor implementácie: Martin Chlebovec (martinius96)
+//Starting refresh rate: 1Hz
+//Podpor autora projektu kávou: https://paypal.me/chlebovec
 
-void isr() {
-  rev++;
-}
+#include &lt;avr\wdt.h>
+#include &lt;FastX9CXXX.h>
+// pinout
+#define X9_CS  3
+#define X9_INC 4
+#define X9_UD  5
 
+
+#define ROBOTDYN_Pin 2 // ROBOTDYN modul pripojeny k D2 (podpora preprusenia)
+volatile unsigned long tipCount; // pocet pulzov, inkrementovane v interrupte
+volatile unsigned long ContactTime;// timer v interrupte - casovy debounce
+
+FastX9C103 x9; //objekt x9 pre triedu FastX9C103
+unsigned long timer = 0;
+unsigned long interval = 1000;
 void setup() {
-  lcd.begin(); //100 kHz I2C speed - Standard Mode
-  lcd.backlight();
-  lcd.setCursor(0, 0);
-  lcd.print("-----ZETOR 4011-----");
-  attachInterrupt(digitalPinToInterrupt (2), isr, RISING); //interrupt pin
+  // zahájení komunikace po sériové lince
+  Serial.begin(9600);
+  pinMode(ROBOTDYN_Pin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(ROBOTDYN_Pin), rgisr, FALLING); //prerusenie na zostupnu hranu - LOW
+  sei();// Enable Interrupts
+  x9.Setup(X9_CS, X9_UD, X9_INC);
+  wdt_enable(WDTO_8S); //watchdog
 }
 
 void loop() {
-  delay(1000);
-  detachInterrupt(digitalPinToInterrupt(2));      
-  time = millis() - oldtime;    //rozdiel casov
-  rpm = (rev / time) * 60000;   //vyrataj otacky/min
-  oldtime = millis();           //uloz aktualny cas
-  rev = 0;
-  lcd.setCursor(0, 1);
-  lcd.print(rpm);
-  lcd.print(" ot/min   ");
-  attachInterrupt(digitalPinToInterrupt (2), isr, RISING);
+  wdt_reset(); //feed watchdog
+  if (Serial.available())
+  {
+    char val = Serial.read();
+    if (val == '+')
+      interval += 100;
+    else if (val == '-')
+      interval -= 100;
+  }
+  if ((millis() - timer) >= interval) {
+    Serial.print("Interval: ");
+    Serial.println(interval);
+    timer = millis();
+    cli();//Disable interrupts
+    x9.JumpToStep(tipCount);
+    Serial.print("Pocet impulzov: ");
+    Serial.println(tipCount); //1 pulz = 100 ohm
+    tipCount = 0; //VYNULOVANIE PULZOV
+    sei();//Enables interrupts
+    Serial.print("Priblizna hodnota nastaveneho odporu: ");
+    Serial.print(x9.GetEstimatedResistance(), DEC);
+    Serial.println(" Ohm");
+  }
+}
+
+void rgisr() {
+  //AK JE MEDZI PULZAMI ASPON 15ms
+  if ((millis() - ContactTime) > 15 ) { // debounce of sensor signal
+    tipCount++; //PRIPOCITAJ +1
+    ContactTime = millis(); //uloz cas pulzu
+  }
 }
 </pre>
-<center><img src="https://i.imgur.com/eIfKPXN.jpg" style="display: block; max-width: 100%; height: auto;" alt="Otáčkomer - výpis na displej - Arduino" title="Otáčkomer - výpis na displej - Arduino"></center>
-<h4>Rozšírený program:</h4>
-<p style="text-align: justify;">
-Využíva prepočet pauzy medzi jednotlivými pulzami v čase kompilácie na základe hodnoty z makra, ktoré predstavuje maximálne otáčky stroja, ktoré nadobúda. 
-Oproti zjednodušenému programu je integrovaná aj volatile premenná uint_32, ktorá uchováva čas posledného pulzu. 
-To v kombinácii so známou pauzou zaručí správne pripočítanie pulzu bez zákmitu, ktoré sa môžu vyskytnúť. 
-Meranie je presnejšie ako v klasickom programe. 
-Rozšírený program nevyužíva delay(), nahradené funkciou millis() pre presnejšie časovanie rutiny každých 1000 ms bez oneskorenia spôsobeného vykreslovaním na displej (rádovo v pôvodnom programe 1000 ms delay + 3 ms vykonávanie výpisu na displej na každú iteráciu loopu).
-Komunikácia s displejom je rýchlejšia, nakoľko je nastavený hodinový signál 400 kHz (Fast speed). 
-Prekreslovanie znakov trvá 4-násobne kratšie ako v prípade štandardnej komunikačnej rýchlosti 100 kHz. 
-Funkcie detach a attach interrupt nahradené s makrami cli(), sei(). 
-Implementácia je vhodná aj pre projekty s vyšším počtom otáčok za minútu (rádovo až do 12 000 ot/min). 
-</p>
-<center><img src="https://i.imgur.com/661YlGp.png" style="display: block; max-width: 100%; height: auto;" alt="Debouncing - rozšírená verzia projektu Otáčkomer" title="Debouncing - rozšírená verzia projektu Otáčkomer"></center>
 			</div>
 		</div>
 </div>
